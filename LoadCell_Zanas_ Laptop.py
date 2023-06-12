@@ -8,7 +8,6 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import ttk
-#HELLO WORLD
 # Function to handle opening the serial port
 def open_serial_port():
     # Get the serial port name and baud rate from the input fields
