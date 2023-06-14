@@ -1,13 +1,18 @@
 import serial
 import time
-import codecs
 import winsound
+import codecs
 import threading
+import numpy as np
+import matplotlib.pyplot as plt
 import tkinter as tk
+from matplotlib.backends.backend_tkagg import (
+     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import ttk
+
 # Function to handle opening the serial port
 def open_serial_port():
     # Get the serial port name and baud rate from the input fields
@@ -26,31 +31,24 @@ def open_serial_port():
         window = tk.Tk()
         window.title("Zanas Load-Cell")  # Add title to the window
 
-        global maxf;
-        maxf=0;
+        global maxf
+        global incoming_data
+        global ti
+        global ax
+        global canvas
+        ti=[0.0]
+        incoming_data=[0]
+        maxf=0
         
-        def parachute():
-            ser.write(b'2')
-            Ignite_Motor['text']= "Parachute Deployed!"
-            Ignite_Motor['foreground']= "#91030a"
-            window.update()
-            winsound.Beep(1000, 500)
-            if button['text']=="Ignite Motor":
-                Ignite_Motor['text']='Waiting for Ignition...'
-                Ignite_Motor['foreground']= gray
-            else:
-                if button['text']=="Activate":
-                    Ignite_Motor['text']='Waiting for Activation...'
-                    Ignite_Motor['foreground']= gray
-                else:
-                    Ignite_Motor['foreground']= '#DDDDDD'
-                    Ignite_Motor['text']= "Motor Ignited"         
-            window.update()
+        def updateGraph():
+            global ti
+            global ax
+            global canvas
+            global incoming_data
+            ti.append(ti[-1]+0.5)
+            ax.plot(ti, incoming_data) 
+            canvas.draw()
 
-        def stopIgnition():
-            global stop
-            stop=1
-        
         def Ignite_Motor():
             global stop
             stop=0
@@ -95,6 +93,7 @@ def open_serial_port():
                         button['bg']=gray
         
         # Make the new window fullscreen
+        
         window.attributes('-fullscreen', True)
         window.configure(bg="#282424")
     
@@ -108,7 +107,7 @@ def open_serial_port():
         crimson = '#DC143C'
         gray="#8C92AC"
 
-        # Add a label to the window for displaying serial data
+        
         #peso (g)
         alt_label1 = ttk.Label(window, text="Peso:", font=alt_label_font, foreground=crimson, background="#282424", justify = 'center')
         alt_label1.grid(row=0, column = 0, columnspan = 3)
@@ -120,10 +119,14 @@ def open_serial_port():
         serial_label2 = ttk.Label(window, text="5 Data...", font=serial_label_font, foreground=serial_label_color, background="#282424", justify = 'center')
         serial_label2.grid(row=1, column = 3, columnspan = 3)
         
-        #Graph
-        canvas = tk.Canvas(window, width=300, height=200, bg="white")
-        rectangle = canvas.create_rectangle(50, 50, 150, 100, fill="white")
-        canvas.grid(row = 2, column = 0, columnspan = 6, rowspan = 2, pady = 25)
+        # Create Canvas
+        fig, ax = plt.subplots()
+        canvas = FigureCanvasTkAgg(fig, master=window)  
+        canvas.get_tk_widget().grid(row = 2, column = 0, columnspan = 6, rowspan = 2, pady = 25)
+        
+        # Plot data on Matplotlib Figure
+        ax.plot(ti, incoming_data)      
+        canvas.draw()
 
 
         #button
@@ -141,8 +144,9 @@ def open_serial_port():
         def read_serial():
             while True:
                 global maxf
-                data = ser.readline().decode().strip()
-                serial_label.configure(text=data)
+                global incoming_data
+                data = ser.readline().decode('utf-8-sig').strip()
+                serial_label1.configure(text=data)
                 if(data[0].isnumeric()):
                     res = ''
                     for i in range(0, len(data)):
@@ -150,6 +154,8 @@ def open_serial_port():
                             res = res + data[i]
                         else:
                             break
+                    incoming_data.append(float(res))
+                    updateGraph()
                     if(float(res)>maxf):
                         maxf=float(res)
                         maxfLabel.configure(text="Max Height: "+str(maxf)+" m")
