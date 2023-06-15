@@ -10,6 +10,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import ttk
+import vispy.scene
 
 # Function to handle opening the serial port
 def open_serial_port():
@@ -123,11 +124,8 @@ def open_serial_port():
         serial_label2.grid(row=1, column = 3, columnspan = 3)
         
         # Create Canvas
-        fig, ax = plt.subplots()
-        ax.figure.set_figheight(3.2)
-        ax.figure.set_figwidth(5)
-        canvas = FigureCanvasTkAgg(fig, master=window)  
-        canvas.get_tk_widget().grid(row = 2, column = 0, columnspan = 6, rowspan = 2, pady = 25)
+        canvas = vispy.scene.SceneCanvas(keys='interactive', show=True)
+        view = canvas.central_widget.add_view()
         
         # Plot data on Matplotlib Figure
         ax.plot(ti, incoming_data)      
