@@ -10,8 +10,8 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import ttk
-import vispy.scene
 
+k=0
 # Function to handle opening the serial port
 def open_serial_port():
     # Get the serial port name and baud rate from the input fields
@@ -45,12 +45,15 @@ def open_serial_port():
             global ti
             global ax
             global canvas
-            global incoming_data
-            ax.clear()   
-            ax.plot(ti, incoming_data, linewidth=3, color="#FF0000",label="Force(N)")  
+            global incoming_data 
+            ax.clear()
+            ax.plot(ti, incoming_data, linewidth=3, color="#FF0000",label="Force(N)")
             ax.grid()
             ax.legend()
-            ax.fill_between(ti, incoming_data, color="#FF0000", alpha=0.2)
+            ax.set_title("Force(N) over Time(s)")
+            ax.set_xlabel("Time(s)")
+            ax.set_ylabel("Force(N)")
+            ax.fill_between(ti, incoming_data, 0, color="#FF0000", alpha=0.2)
             canvas.draw()
 
         def Ignite_Motor():
@@ -124,11 +127,22 @@ def open_serial_port():
         serial_label2.grid(row=1, column = 3, columnspan = 3)
         
         # Create Canvas
-        canvas = vispy.scene.SceneCanvas(keys='interactive', show=True)
-        view = canvas.central_widget.add_view()
         
-        # Plot data on Matplotlib Figure
-        ax.plot(ti, incoming_data)      
+        fig = plt.Figure()
+        ax = fig.add_subplot(111)
+        ax.figure.set_figheight(3.2)
+        ax.figure.set_figwidth(5)
+
+        # Create a canvas for plotting
+        canvas = FigureCanvasTkAgg(fig, master=window)
+        canvas.get_tk_widget().grid(row = 2, column = 0, columnspan = 6, rowspan = 2, pady = 25)
+        ax.plot(ti, incoming_data, linewidth=3, color="#FF0000",label="Force(N)")  
+        ax.grid()
+        ax.legend()
+        ax.set_title("Force(N) over Time(s)")
+        ax.set_xlabel("Time(s)")
+        ax.set_ylabel("Force(N)")
+        ax.fill_between(ti, incoming_data, 0, color="#FF0000", alpha=0.2)
         canvas.draw()
 
 
@@ -149,31 +163,39 @@ def open_serial_port():
                 global maxf
                 global incoming_data
                 global impulse
-                data = ser.readline().decode().strip()
-                
-                if(data[0].isnumeric()):
-                    res = ''
-                    temp= ''
-                    for i in range(0, len(data)):
-                        if data[i]!=" ":
-                            res = res + data[i]
-                        else:
-                            for j in range((i+1), len(data), 1):
-                                temp=temp + data[j]
-                            break
-                    incoming_data.append(float(res))
-                    temp=float(temp)/1000
-                    ti.append(temp)
-                    print(temp)
-                    if(float(res)>maxf):
-                        maxf=float(res)
-                        maxfLabel.configure(text="Max Force: "+str(round(float(maxf)*0.009806652, 3))+" N")
-                    impulse+=float(incoming_data[-1])*0.009806652*(ti[-1]-ti[-2])
-                    impulseLabel.configure(text="Impulse: "+str(round(impulse, 3)) +  "N*s")
-                    serial_label1.configure(text=res+" g")
-                    serial_label2.configure(text=str(round(float(res)*0.009806652, 3))+ " N")
-                    #updateGraph()
-                    
+                global k
+                try:
+                    data = str(ser.readline().strip())[2:-1]
+                except serial.SerialException as e:
+                    print("Error", str(e))
+                else:
+                    if(data[0].isnumeric()):
+                        res = ''
+                        temp= ''
+                        for i in range(0, len(data)):
+                            if data[i]!=" ":
+                                res = res + data[i]
+                            else:
+                                for j in range((i+1), len(data), 1):
+                                    temp=temp + data[j]
+                                break
+                            try:
+                                float(res)
+                            except ValueError:
+                                return
+                        incoming_data.append(float(res))
+                        temp=float(temp)/1000
+                        ti.append(temp)
+                        if(float(res)>maxf):
+                            maxf=float(res)
+                            maxfLabel.configure(text="Max Force: "+str(round(float(maxf)*0.009806652, 3))+" N")
+                        impulse+=float(incoming_data[-1])*0.009806652*(ti[-1]-ti[-2])
+                        impulseLabel.configure(text="Impulse: "+ str(round(impulse, 3)) +  "N*s") # format(value, '.6f')
+                        serial_label1.configure(text=res+" g")
+                        serial_label2.configure(text=str(round(float(res)*0.009806652, 3))+ " N")
+                        if(k%3==0):
+                            updateGraph()
+                        k+=1
 
         
         

@@ -174,7 +174,7 @@ def open_serial_port():
                     impulseLabel.configure(text="Impulse: "+str(round(impulse, 3)) +  "N*s")
                     serial_label1.configure(text=res+" g")
                     serial_label2.configure(text=str(round(float(res)*0.009806652, 3))+ " N")
-                    #updateGraph()
+                    updateGraph()
                     
 
         
