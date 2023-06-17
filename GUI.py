@@ -8,10 +8,10 @@ def temp_event():
 app = cTk.CTk()
 cTk.set_appearance_mode("Dark")
 app.title("my app")
-w= app.winfo_screenwidth()
-h= app.winfo_screenheight()
-x=-10
-y=0
+w= app.winfo_screenwidth()*0.8
+h= app.winfo_screenheight()*0.8
+x= app.winfo_screenwidth()*0.1
+y= app.winfo_screenheight()*0.1
 app.geometry('%dx%d+%d+%d' % (w, h, x, y))
 app.grid_columnconfigure((0, 1, 2, 3, 4, 5, 6), weight=1)
 app.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=1)
