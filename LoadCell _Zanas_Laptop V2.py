@@ -268,19 +268,19 @@ def open_serial_port():
                         temp=float(temp)/1000
                         if(temp<ti[-1]):
                             resetData()
-                            return
-                        ti.append(temp)
-                        if(force>maxf):
-                            maxf=force
-                            maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
-                        impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
-                        iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
-                        gLabel.configure(text=str(uFormat(force, 2))+" g")
-                        NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
-                        tLabel.configure(text=str(ti[-1])+" s")
-                        if(k%3==0):
-                            updateGraph()
-                        k+=1
+                        else:
+                            ti.append(temp)
+                            if(force>maxf):
+                                maxf=force
+                                maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
+                            impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
+                            iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
+                            gLabel.configure(text=str(uFormat(force, 2))+" g")
+                            NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
+                            tLabel.configure(text=str(ti[-1])+" s")
+                            if(k%3==0):
+                                updateGraph()
+                            k+=1
 
         
         
