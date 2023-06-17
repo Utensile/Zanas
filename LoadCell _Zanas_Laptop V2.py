@@ -35,8 +35,8 @@ def open_serial_port():
         app.title("my app")
         w= app.winfo_screenwidth()*0.8
         h= app.winfo_screenheight()*0.9
-        x= app.winfo_screenwidth()*0.05
-        y= app.winfo_screenheight()*0.1
+        x= app.winfo_screenwidth()*0.1
+        y= 0
         app.geometry('%dx%d+%d+%d' % (w, h, x, y))
         app.grid_columnconfigure((0, 1, 2, 3, 4, 5, 6), weight=1)
         app.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=1)
@@ -270,23 +270,24 @@ def open_serial_port():
                             force=float(force)
                         except ValueError:
                             print("Error: " + str(force))
-                        incoming_data.append(round(force*0.009806652, 3))
-                        temp=float(temp)/1000
-                        if(temp<ti[-1]):
-                            resetData()
                         else:
-                            ti.append(temp)
-                            if(force>maxf):
-                                maxf=force
-                                maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
-                            impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
-                            iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
-                            gLabel.configure(text=str(uFormat(force, 2))+" g")
-                            NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
-                            tLabel.configure(text=str(ti[-1])+" s")
-                            if(k%3==0):
-                                updateGraph()
-                            k+=1
+                            incoming_data.append(round(force*0.009806652, 3))
+                            temp=float(temp)/1000
+                            if(temp<ti[-1]):
+                                resetData()
+                            else:
+                                ti.append(temp)
+                                if(force>maxf):
+                                    maxf=force
+                                    maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
+                                impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
+                                iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
+                                gLabel.configure(text=str(uFormat(force, 2))+" g")
+                                NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
+                                tLabel.configure(text=str(ti[-1])+" s")
+                                if(k%3==0):
+                                    updateGraph()
+                                k+=1
 
         
         
