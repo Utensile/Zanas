@@ -34,8 +34,8 @@ def open_serial_port():
         cTk.set_appearance_mode("Dark")
         app.title("my app")
         w= app.winfo_screenwidth()*0.8
-        h= app.winfo_screenheight()*0.8
-        x= app.winfo_screenwidth()*0.1
+        h= app.winfo_screenheight()*0.9
+        x= app.winfo_screenwidth()*0.05
         y= app.winfo_screenheight()*0.1
         app.geometry('%dx%d+%d+%d' % (w, h, x, y))
         app.grid_columnconfigure((0, 1, 2, 3, 4, 5, 6), weight=1)
@@ -96,6 +96,12 @@ def open_serial_port():
             global incoming_data 
             ax.clear()
             ax.plot(ti, incoming_data, linewidth=3, color="#FF0000",label="Force(N)")
+            ax.grid()
+            ax.legend()
+            ax.set_title("Force(N) over Time(s)")
+            ax.set_xlabel("Time(s)")
+            ax.set_ylabel("Force(N)")
+            ax.fill_between(ti, incoming_data, 0, color="#FF0000", alpha=0.2)
             canvas.draw()
 
         def Ignite_Motor():
@@ -198,8 +204,8 @@ def open_serial_port():
         fig.patch.set_facecolor(frame_color)
         ax = fig.add_subplot(111)
         ax.patch.set_facecolor(graphColorIn)
-        ax.figure.set_figheight(3.8)
-        ax.figure.set_figwidth(6.5)
+        #ax.figure.set_figheight(3.8)
+        #ax.figure.set_figwidth(6.5)
         canvas = FigureCanvasTkAgg(fig, master=graphFrame)
         canvas.get_tk_widget().grid(row = 0, column=0, padx=2, pady=2)
         ax.plot(ti, incoming_data, linewidth=3, color="#FF0000",label="Force(N)")  
