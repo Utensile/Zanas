@@ -281,6 +281,11 @@ def open_serial_port():
                     print(data)
                 except serial.SerialException as e:
                     print("Error", str(e))
+                    print("Attempting Reconnect in 2s...")
+                    ser.close()
+                    time.sleep(2)
+                    ser = serial.Serial(port_name, baud_rate)
+
                 else:
                     if(data[0].isnumeric()):
                         force = ''
