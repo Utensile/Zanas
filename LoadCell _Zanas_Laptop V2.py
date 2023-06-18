@@ -79,12 +79,11 @@ def open_serial_port():
             global cVariable
             impulse=0
             if(not arduino):
-                ti[-1]=cVariable
-            else :
+                cVariable+=ti[-1]
+            else:
                 cVariable=0
-            ti=[0.0]
-            incoming_data=[0]
-            updateGraph()
+            ti=[]
+            incoming_data=[]
             maxf=0
             ser.write(b'2')
 
@@ -164,15 +163,17 @@ def open_serial_port():
         buttonFrame.grid(row=1, column=0, rowspan=9, columnspan=4, sticky="nsew", padx=10, pady=10)
 
         buttonFrame.grid_rowconfigure((0, 1, 2), weight=1)
-        buttonFrame.grid_columnconfigure(0, weight=1)
+        buttonFrame.grid_columnconfigure((0, 1), weight=1)
         timeFrame=cTk.CTkFrame(buttonFrame, corner_radius=corn_rad*1.5, fg_color=timeFrame_color)
-        timeFrame.grid(row=0, column=0, padx=20, pady=15)
+        timeFrame.grid(row=0, column=0, columnspan=2, padx=20, pady=15)
         dateLabel=cTk.CTkLabel(timeFrame, text="16/01/2023 9:00", text_color=txt_color_light, font=TextFontL)
         dateLabel.pack(padx=10, pady=10)
         startButton=cTk.CTkButton(buttonFrame, text="Start Test", text_color=txt_color_light, font=TextFontL, command=Ignite_Motor, width=butt_size, height=butt_size*4*0.25, fg_color=butt_color, corner_radius=corn_rad*1.5)
-        startButton.grid(row=1, column=0, padx=20, pady=8)
+        startButton.grid(row=1, column=0, columnspan=2, padx=20, pady=8)
         exportButton=cTk.CTkButton(buttonFrame, text="Export Data", text_color=txt_color_light, font=TextFontS, command=export, width=butt_size*4*0.35, height=butt_size*4*0.35*0.4, fg_color=butt_color)
         exportButton.grid(row=2, column=0, padx=20, pady=15)
+        tareButton=cTk.CTkButton(buttonFrame, text="Tare Load Cell", text_color=txt_color_light, font=TextFontS, command=resetData, width=butt_size*4*0.35, height=butt_size*4*0.35*0.4, fg_color=butt_color)
+        tareButton.grid(row=2, column=1, padx=20, pady=15)
 
         #WeatherFrame
         weatherFrame=cTk.CTkFrame(app, corner_radius=corn_rad, fg_color=frame_color)
@@ -252,7 +253,6 @@ def open_serial_port():
                 global k
                 try:
                     data = str(ser.readline().strip())[2:-1]
-                    print(data)
                 except serial.SerialException as e:
                     print("Error", str(e))
                 else:
@@ -273,14 +273,15 @@ def open_serial_port():
                         else:
                             incoming_data.append(round(force*0.009806652, 3))
                             temp=float(temp)/1000
-                            if(temp<ti[-1]):
-                                resetData()
+                            if(len(ti)!=0 and temp<ti[-1]):
+                                resetData(True)
                             else:
-                                ti.append(temp)
+                                ti.append(round(temp-cVariable, 3))
                                 if(force>maxf):
                                     maxf=force
                                     maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
-                                impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
+                                if(len(ti)!=0):
+                                    impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
                                 iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
                                 gLabel.configure(text=str(uFormat(force, 2))+" g")
                                 NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
