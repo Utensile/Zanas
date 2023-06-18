@@ -11,8 +11,10 @@ from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import ttk
 import customtkinter as cTk
+from datetime import datetime
 
-k=0
+state=0
+l=0
 def uFormat(num, dig):
     return ('{number:.{digits}f}'.format(number=num, digits=dig))
 
@@ -20,6 +22,10 @@ def open_serial_port():
     # Get the serial port name and baud rate from the input fields
     port_name = port_name_entry.get()
     baud_rate = baud_rate_entry.get()
+    global pressure
+    global hum
+    global temp
+    pressure=pressure_entry.get()
 
     # Attempt to open the serial port
     try:
@@ -56,6 +62,7 @@ def open_serial_port():
         graphColorIn="#AAAAAA"
         gray=graphColorIn
 
+        global state
         global maxf
         global incoming_data
         global ti
@@ -76,7 +83,11 @@ def open_serial_port():
             global ax
             global canvas
             global impulse
+            global avgf
+            global impulseTime
             global cVariable
+            global resetImpulse
+            resetImpulse=True
             impulse=0
             if(not arduino):
                 cVariable+=ti[-1]
@@ -86,6 +97,7 @@ def open_serial_port():
             incoming_data=[]
             maxf=0
             ser.write(b'2')
+            ser.read_all
 
 
         def updateGraph():
@@ -105,48 +117,50 @@ def open_serial_port():
 
         def Ignite_Motor():
             global stop
+            global state
             stop=0
-            if startButton['text']=="Activate":
-                Ignite_Motor['text']='Waiting for Ignition..'
-                Ignite_Motor['foreground']= gray
+            if(state==0):
+                infoLabel.configure(text='Waiting for Ignition..')
+                infoLabel.configure(fg_color=gray)
                 startButton.configure(text="Ignite Motor")
-                startButton['bg']="#91030a"
-                stop=0
-            else:
-                if startButton['text']=="Ignite Motor":
-                    for i in range(5, 0, -1):
-                        if(stop!=1):
-                            Ignite_Motor['text'] = 'Ignition in {}'.format(i)
-                            app.update()
-                        if(stop!=1):
-                            winsound.Beep(800, 300)
-                        if(stop!=1):
-                            time.sleep(0.7)
-                        else:
-                            break
-                    if(stop!=1):
-                        ser.write(b'1')
-                        Ignite_Motor['text']= "Motor Ignited!!!"
-                        root.update()
-                        winsound.Beep(1000, 1000)
-                        Ignite_Motor['text']= "Motor Ignited"
-                        Ignite_Motor['foreground']= '#DDDDDD'
-                        startButton['text']="Reset"
-                        startButton['bg']=gray
-                    else:
-                        Ignite_Motor['text']='Waiting for Ignition...'
-                        Ignite_Motor['foreground']= gray
-                        startButton['text']="Ignite_Motor"
-                        startButton['bg']="#91030a"
+                startButton.configure(fg_color="#91030a")
+                state=1
+            elif(state==1):
+                for i in range(5, 0, -1):
+                    infoLabel.configure(text='Ignition in {}'.format(i))
                     app.update()
-                else:
-                    if startButton['text']=="Reset":
-                        Ignite_Motor['text']='Waiting for Activation...'
-                        Ignite_Motor['foreground']= gray
-                        startButton['text']='Activate'
-                        startButton['bg']=gray
+                    winsound.Beep(800, 300)
+                    time.sleep(0.7)
+                ser.read_all()
+                ser.write(b'1')
+                infoLabel.configure(text="Motor Ignited!!!")
+                state=2
+                winsound.Beep(1000, 1000)
+                infoLabel.configure(text="Motor Ignited")
+                infoLabel.configure(fg_color='#DDDDDD')
+                startButton.configure(text="Reset")
+                startButton.configure(bg_color=gray)
+            elif(state==2):
+                infoLabel.configure(text='Waiting for Activation...')
+                infoLabel.configure(fg_color=gray)
+                startButton.configure(text='Start Test')
+                startButton.configure(bg_color=gray)
+                state=0
         def export():
-            print("export")
+            global incoming_data
+            global ti
+            global pressure
+            global hum
+            global temp
+            global impulse
+            global avgf
+            global impulseTime
+            global maxf
+            with open(datetime.now().strftime("DATA-%Y-%m-%d_%H-%M-%S.txt"), "w") as file:
+                file.write("ZANAS load cell data test\n"+datetime.now().strftime("%d/%m/%Y\n%H:%M:%S")+"\n"+"Humidity: "+str(hum)+"%"+" - "+"Temperature: "+ str(temp)+" °C"+" - "+ "Pressure: "+str(pressure)+" Pa\nImpulse: "+str(round(impulse, 3))+" N*s - Impulse Time: "+str(impulseTime)+" s - Avg. Force:"+str(round(avgf,3))+ " N - Max Force: "+str(round(maxf*0.009806652, 3))+ "N\nForce(N): - Time(s)\n")
+                for i in range(len(incoming_data)):
+                    file.write(str(incoming_data[i])+ " - "+str(ti[i])+"\n")
+
         # Make the new window fullscreen
         
         #TitleFrame
@@ -162,18 +176,20 @@ def open_serial_port():
         buttonFrame=cTk.CTkFrame(app, corner_radius=corn_rad, fg_color=frame_color)
         buttonFrame.grid(row=1, column=0, rowspan=9, columnspan=4, sticky="nsew", padx=10, pady=10)
 
-        buttonFrame.grid_rowconfigure((0, 1, 2), weight=1)
+        buttonFrame.grid_rowconfigure((0, 1, 2, 3), weight=1)
         buttonFrame.grid_columnconfigure((0, 1), weight=1)
         timeFrame=cTk.CTkFrame(buttonFrame, corner_radius=corn_rad*1.5, fg_color=timeFrame_color)
         timeFrame.grid(row=0, column=0, columnspan=2, padx=20, pady=15)
-        dateLabel=cTk.CTkLabel(timeFrame, text="16/01/2023 9:00", text_color=txt_color_light, font=TextFontL)
+        dateLabel=cTk.CTkLabel(timeFrame, text="16/01/2023 9:00", text_color=txt_color_light, font=TextFontM)
         dateLabel.pack(padx=10, pady=10)
         startButton=cTk.CTkButton(buttonFrame, text="Start Test", text_color=txt_color_light, font=TextFontL, command=Ignite_Motor, width=butt_size, height=butt_size*4*0.25, fg_color=butt_color, corner_radius=corn_rad*1.5)
         startButton.grid(row=1, column=0, columnspan=2, padx=20, pady=8)
+        infoLabel=cTk.CTkLabel(buttonFrame, text="Waiting for Activation", text_color=txt_color_light, font=TextFontM)
+        infoLabel.grid(row=2, column=0, columnspan=2, padx=20, pady=8)
         exportButton=cTk.CTkButton(buttonFrame, text="Export Data", text_color=txt_color_light, font=TextFontS, command=export, width=butt_size*4*0.35, height=butt_size*4*0.35*0.4, fg_color=butt_color)
-        exportButton.grid(row=2, column=0, padx=20, pady=15)
+        exportButton.grid(row=3, column=0, padx=20, pady=10)
         tareButton=cTk.CTkButton(buttonFrame, text="Tare Load Cell", text_color=txt_color_light, font=TextFontS, command=resetData, width=butt_size*4*0.35, height=butt_size*4*0.35*0.4, fg_color=butt_color)
-        tareButton.grid(row=2, column=1, padx=20, pady=15)
+        tareButton.grid(row=3, column=1, padx=20, pady=10)
 
         #WeatherFrame
         weatherFrame=cTk.CTkFrame(app, corner_radius=corn_rad, fg_color=frame_color)
@@ -191,7 +207,7 @@ def open_serial_port():
         hValueLabel.grid(row=0, column=1, padx=20, pady=15)
         TValueLabel=cTk.CTkLabel(weatherFrame, text="0.00 °C", text_color=txt_color_dark, font=TextFontM)
         TValueLabel.grid(row=1, column=1, padx=20, pady=15)
-        pValueLabel=cTk.CTkLabel(weatherFrame, text="000 Pa", text_color=txt_color_dark, font=TextFontM)
+        pValueLabel=cTk.CTkLabel(weatherFrame, text=str(pressure)+"  Pa", text_color=txt_color_dark, font=TextFontM)
         pValueLabel.grid(row=2, column=1, padx=20, pady=15)
 
         #GraphFrame
@@ -222,73 +238,128 @@ def open_serial_port():
         dataFrame=cTk.CTkFrame(app, corner_radius=corn_rad, fg_color=frame_color)
         dataFrame.grid(row=10, column=4, rowspan=3, columnspan=3, sticky="nsew", padx=10, pady=10)
 
-        dataFrame.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
+        dataFrame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         dataFrame.grid_columnconfigure((0, 1), weight=1)
-        gramLabel=cTk.CTkLabel(dataFrame, text="Force(g): ", text_color=txt_color_light, font=TextFontM)
-        gramLabel.grid(row=0, column=0, padx=20, pady=15)
-        NewtonLabel=cTk.CTkLabel(dataFrame, text="Force(N): ", text_color=txt_color_light, font=TextFontM)
-        NewtonLabel.grid(row=1, column=0, padx=20, pady=15)
-        maxForceLabel=cTk.CTkLabel(dataFrame, text="Max Force(N): ", text_color=txt_color_light, font=TextFontM)
-        maxForceLabel.grid(row=2, column=0, padx=20, pady=15)
+        gramLabel=cTk.CTkLabel(dataFrame, text="Force: ", text_color=txt_color_light, font=TextFontM)
+        gramLabel.grid(row=0, column=0, padx=20, pady=8)
+        NewtonLabel=cTk.CTkLabel(dataFrame, text="Force: ", text_color=txt_color_light, font=TextFontM)
+        NewtonLabel.grid(row=1, column=0, padx=20, pady=8)
+        maxForceLabel=cTk.CTkLabel(dataFrame, text="Max Force: ", text_color=txt_color_light, font=TextFontM)
+        maxForceLabel.grid(row=2, column=0, padx=20, pady=8)
         impulseLabel=cTk.CTkLabel(dataFrame, text="Impulse: ", text_color=txt_color_light, font=TextFontM)
-        impulseLabel.grid(row=3, column=0, padx=20, pady=15)
-        timeLabel=cTk.CTkLabel(dataFrame, text="Time: ", text_color=txt_color_light, font=TextFontM)
-        timeLabel.grid(row=4, column=0, padx=20, pady=15)
+        impulseLabel.grid(row=3, column=0, padx=20, pady=8)
+        avgForceLabel=cTk.CTkLabel(dataFrame, text="Avg. Force: ", text_color=txt_color_light, font=TextFontM)
+        avgForceLabel.grid(row=4, column=0, padx=20, pady=8)
+        impulseTimeLabel=cTk.CTkLabel(dataFrame, text="Impulse Time: ", text_color=txt_color_light, font=TextFontM)
+        impulseTimeLabel.grid(row=5, column=0, padx=20, pady=15)
         gLabel=cTk.CTkLabel(dataFrame, text="0.00 g", text_color=txt_color_light, font=TextFontM)
-        gLabel.grid(row=0, column=1, padx=20, pady=15)
+        gLabel.grid(row=0, column=1, padx=20, pady=8)
         NLabel=cTk.CTkLabel(dataFrame, text="0.000 N", text_color=txt_color_light, font=TextFontM)
-        NLabel.grid(row=1, column=1, padx=20, pady=15)
+        NLabel.grid(row=1, column=1, padx=20, pady=8)
         maxfLabel=cTk.CTkLabel(dataFrame, text="0.000 N", text_color=txt_color_light, font=TextFontM)
-        maxfLabel.grid(row=2, column=1, padx=20, pady=15)
+        maxfLabel.grid(row=2, column=1, padx=20, pady=8)
         iLabel=cTk.CTkLabel(dataFrame, text="0.000 N*s", text_color=txt_color_light, font=TextFontM)
-        iLabel.grid(row=3, column=1, padx=20, pady=15)
-        tLabel=cTk.CTkLabel(dataFrame, text="0.000 s", text_color=txt_color_light, font=TextFontM)
-        tLabel.grid(row=4, column=1, padx=20, pady=15)
+        iLabel.grid(row=3, column=1, padx=20, pady=8)
+        avgfLabel=cTk.CTkLabel(dataFrame, text="0.000 N", text_color=txt_color_light, font=TextFontM)
+        avgfLabel.grid(row=4, column=1, padx=20, pady=8)
+        itLabel=cTk.CTkLabel(dataFrame, text="0.000 s", text_color=txt_color_light, font=TextFontM)
+        itLabel.grid(row=5, column=1, padx=20, pady=8)
         # Function to read serial data and update the label
         def read_serial():
             while True:
                 global maxf
                 global incoming_data
                 global impulse
-                global k
+                global l
+                global resetImpulse
+                global hum
+                global temp
+                global avgf
+                global impulseTime
                 try:
                     data = str(ser.readline().strip())[2:-1]
+                    print(data)
                 except serial.SerialException as e:
                     print("Error", str(e))
                 else:
                     if(data[0].isnumeric()):
                         force = ''
+                        tim=''
+                        tim2=''
+                        hum=''
                         temp= ''
                         for i in range(0, len(data)):
                             if data[i]!=" ":
                                 force = force + data[i]
                             else:
                                 for j in range((i+1), len(data), 1):
-                                    temp=temp + data[j]
+                                    if data[j]!=" ":
+                                        tim=tim + data[j]
+                                    else:
+                                        for k in range((j+1), len(data), 1):
+                                            if data[k]!=" ":
+                                                hum=hum + data[k]
+                                            else:
+                                                for h in range((k+1), len(data), 1):
+                                                    if data[h]!=" ":
+                                                        temp=temp + data[h]
+                                                    else:
+                                                        for p in range((h+1), len(data), 1):
+                                                            if data[p]!=" ":
+                                                                tim2=tim2 + data[p]
+                                                            else:
+                                                                break 
+                                                        break  
+                                                    
+                                                break
+                                        break
                                 break
                         try:
                             force=float(force)
+                            tim=float(tim)/1000
+                            hum=float(hum)
+                            temp=float(temp)
+                            tim2=float(tim2)/1000
                         except ValueError:
-                            print("Error: " + str(force))
+                            print("Error: ")
+                            print("force: "+str(force))
+                            print("tim: "+str(tim))
+                            print("hum: "+str(hum))
+                            print("temp: "+str(temp))
+                            print("tim2: "+str(tim2))
                         else:
                             incoming_data.append(round(force*0.009806652, 3))
-                            temp=float(temp)/1000
-                            if(len(ti)!=0 and temp<ti[-1]):
+                            
+                            if(len(ti)!=0 and tim<ti[-1]):
                                 resetData(True)
                             else:
-                                ti.append(round(temp-cVariable, 3))
+                                ti.append(round(tim-cVariable, 3))
                                 if(force>maxf):
                                     maxf=force
                                     maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
-                                if(len(ti)!=0):
+                                if(len(ti)>1 and force>20):
+                                    if(resetImpulse):
+                                        impulse=0
+                                        resetImpulse=False
                                     impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
+                                else:
+                                    resetImpulse=True
                                 iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
                                 gLabel.configure(text=str(uFormat(force, 2))+" g")
                                 NLabel.configure(text=str(uFormat(round(force*0.009806652, 4), 3)+ " N"))
-                                tLabel.configure(text=str(ti[-1])+" s")
-                                if(k%3==0):
+                                hValueLabel.configure(text=str(uFormat(hum, 2))+"%")
+                                TValueLabel.configure(text=str(uFormat(temp, 2))+"°C")
+                                impulseTime=tim2
+                                itLabel.configure(text=str(uFormat(tim2, 3))+" s")
+                                dateLabel.configure(text=datetime.now().strftime("%d/%m/%Y\n%H:%M:%S"))
+                                if(tim2!=0):
+                                    avgf=impulse/tim2
+                                    avgfLabel.configure(text=str(uFormat(avgf, 3))+" N")
+                                else:
+                                    avgfLabel.configure(text="0.000 N")
+                                if(l%5==0):
                                     updateGraph()
-                                k+=1
+                                l+=1
 
         
         
@@ -340,9 +411,15 @@ baud_rate_entry = ttk.Entry(root, font=("Helvetica", 20))
 baud_rate_entry.insert(0, "9600")
 baud_rate_entry.grid(row=1, column=1, padx=10, pady=10)  # Add baud_rate_entry to the window with padding
 
+pressure_label = ttk.Label(root, text="Pressure(Pa):",font=("Helvetica", 20), background="#282424", foreground="#DDDDDD")
+pressure_label.grid(row=2, column=0, padx=10, pady=10) 
+
+pressure_entry = ttk.Entry(root, font=("Helvetica", 20))
+pressure_entry.insert(0, "101325")
+pressure_entry.grid(row=2, column=1, padx=10, pady=10) 
 # Add a button to the window with padding
 open_button = tk.Button(root, text="Avvia Monitor Zanas", font=("Helvetica", 25), command=open_serial_port)
-open_button.grid(row=2, column=0, columnspan=2, pady=40)  # Add open_button to the window
+open_button.grid(row=3, column=0, columnspan=2, pady=40)  # Add open_button to the window
 
 # Run the Tkinter event loop
 root.mainloop()
