@@ -280,7 +280,7 @@ def open_serial_port():
                                 if(force>maxf):
                                     maxf=force
                                     maxfLabel.configure(text=str(uFormat(round(maxf*0.009806652, 4), 3)+" N"))
-                                if(len(ti)!=0):  lol
+                                if(len(ti)!=0):
                                     impulse+=float(incoming_data[-1])*(ti[-1]-ti[-2])
                                 iLabel.configure(text=str(uFormat(impulse, 3)) +  "N*s")
                                 gLabel.configure(text=str(uFormat(force, 2))+" g")
