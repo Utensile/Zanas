@@ -99,9 +99,13 @@ def open_serial_port():
         
         window.attributes('-fullscreen', True)
         window.configure(bg="#282424")
+        
     
-        #window.grid_rowconfigure(0, weight=1)
+        window.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         window.grid_columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+
+        lineImg = Image.open("line.png")
+        
         # Set the font size and color for the serial reader window
         serial_label_font = ('Helvetica', 72)
         serial_label_color = 'white'
@@ -135,9 +139,10 @@ def open_serial_port():
 
 
         #button
-        button = tk.Button(window, text="Activate", font=("Helvetica", 50, "bold"), bg=gray, foreground='white', relief='raised', bd=20, command=Ignite_Motor)
+        button = tk.Button(window, text="Activate", font=("Helvetica", 20, "bold"), bg=gray, foreground='white', relief='raised', bd=5, command=Ignite_Motor,
+                           height= 1, width=40)
         button.grid(row=4, column = 0, columnspan =4)
-        Ignite_Motor = ttk.Label(window, text="Waiting for Activation...", font=('Helvetica', 40), foreground=gray, background="#282424")
+        Ignite_Motor = ttk.Label(window, text="Waiting for Activation...", font=('Helvetica', 20), foreground=gray, background="#282424")
         Ignite_Motor.grid(row=5, column = 0, columnspan =4)
 
         maxfLabel = ttk.Label(window, text="Max Force: 0.00 N", font=('Helvetica', 30, "bold"), foreground="#D89216", background="#282424")
