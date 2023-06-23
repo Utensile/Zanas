@@ -195,7 +195,7 @@ items = sorted(contours, key=cv2.contourArea, reverse= False) #sorting degli ele
 
 
 print(index)
-item = items[index]
+item = items[len(items)-1]
 M = cv2.moments(item)
 x2,y2,w2,h2= cv2.boundingRect(item)
 
